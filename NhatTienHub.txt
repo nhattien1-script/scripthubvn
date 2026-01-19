@@ -1,0 +1,252 @@
+--------------------------------------------------
+-- NOTIFICATION
+--------------------------------------------------
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Script by TienVn 🇻🇳",
+    Text = "Best ỉa😱",
+    Icon = "rbxassetid://121471149924300",
+    Duration = 6
+})
+
+--------------------------------------------------
+-- CINEMATIC INTRO
+--------------------------------------------------
+local CoreGui = game:GetService("CoreGui")
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+
+local BlurFrame = Instance.new("Frame", ScreenGui)
+BlurFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+BlurFrame.BackgroundTransparency = 0.4
+BlurFrame.Size = UDim2.new(1,0,1,0)
+
+local TextLabel = Instance.new("TextLabel", ScreenGui)
+TextLabel.Size = UDim2.new(1,0,1,0)
+TextLabel.BackgroundTransparency = 1
+TextLabel.Text = "nhattien1"
+TextLabel.Font = Enum.Font.GothamBlack
+TextLabel.TextScaled = true
+TextLabel.TextColor3 = Color3.fromRGB(255,255,255)
+TextLabel.TextStrokeTransparency = 0.2
+TextLabel.TextStrokeColor3 = Color3.fromRGB(0,170,255)
+TextLabel.TextTransparency = 1
+
+local TweenService = game:GetService("TweenService")
+TweenService:Create(TextLabel,TweenInfo.new(1),{TextTransparency=0}):Play()
+task.wait(2)
+TweenService:Create(TextLabel,TweenInfo.new(1),{TextTransparency=1}):Play()
+TweenService:Create(BlurFrame,TweenInfo.new(1),{BackgroundTransparency=1}):Play()
+task.wait(3.5)
+ScreenGui:Destroy()
+
+--------------------------------------------------
+-- LOAD WINDUI
+--------------------------------------------------
+local WindUI = loadstring(game:HttpGet(
+"https://raw.githubusercontent.com/teoscrvn/T-ng-h-p-/refs/heads/main/Script%20test%20(1).txt"
+))()
+
+local Window = WindUI:CreateWindow({
+    Title = "NhatTienHUB",
+    Size = UDim2.fromOffset(580, 340),
+    Theme = "Dark",
+    Transparent = true
+})
+
+Window:EditOpenButton({
+    Title = "NhatTienHub",
+    Icon = "monitor",
+    CornerRadius = UDim.new(0,16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(
+        Color3.fromHex("FF0F7B"),
+        Color3.fromHex("F89B29")
+    ),
+    Draggable = true,
+})
+
+--------------------------------------------------
+-- SERVICES
+--------------------------------------------------
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+
+local LP = Players.LocalPlayer
+local Char, Hum, Root
+
+local function LoadChar(c)
+    Char = c
+    Hum = c:WaitForChild("Humanoid")
+    Root = c:WaitForChild("HumanoidRootPart")
+end
+if LP.Character then LoadChar(LP.Character) end
+LP.CharacterAdded:Connect(LoadChar)
+
+--------------------------------------------------
+-- STATE
+--------------------------------------------------
+local state = {
+    Speed = 16,
+    Gravity = 196,
+    Fly = false,
+    FlySpeed = 60,
+    InfJump = false,
+    ESP_Player = false
+}
+
+--------------------------------------------------
+-- APPLY SPEED / GRAVITY
+--------------------------------------------------
+RunService.RenderStepped:Connect(function()
+    if Hum then
+        Hum.WalkSpeed = state.Speed
+        workspace.Gravity = state.Gravity
+    end
+end)
+
+--------------------------------------------------
+-- INFINITE JUMP
+--------------------------------------------------
+UIS.JumpRequest:Connect(function()
+    if state.InfJump and Hum then
+        Hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+--------------------------------------------------
+-- FLY
+--------------------------------------------------
+local bv, bg
+local function StopFly()
+    if bv then bv:Destroy() bv=nil end
+    if bg then bg:Destroy() bg=nil end
+end
+
+local function StartFly()
+    StopFly()
+    bv = Instance.new("BodyVelocity", Root)
+    bv.MaxForce = Vector3.new(9e9,9e9,9e9)
+    bg = Instance.new("BodyGyro", Root)
+    bg.MaxTorque = Vector3.new(9e9,9e9,9e9)
+
+    RunService.RenderStepped:Connect(function()
+        if not state.Fly or not Root then return end
+        local cam = workspace.CurrentCamera
+        local move = Vector3.zero
+
+        if UIS:IsKeyDown(Enum.KeyCode.W) then move += cam.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then move -= cam.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then move -= cam.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then move += cam.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then move += cam.CFrame.UpVector end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= cam.CFrame.UpVector end
+
+        bv.Velocity = move.Magnitude > 0 and move.Unit * state.FlySpeed or Vector3.zero
+        bg.CFrame = cam.CFrame
+    end)
+end
+
+--------------------------------------------------
+-- ESP NAME + DISTANCE
+--------------------------------------------------
+local ESP = {}
+
+local function ClearESP()
+    for _,v in pairs(ESP) do
+        if v then v:Destroy() end
+    end
+    ESP = {}
+end
+
+local function CreateESP(plr)
+    if ESP[plr] or not plr.Character or not plr.Character:FindFirstChild("Head") then return end
+
+    local bb = Instance.new("BillboardGui")
+    bb.Size = UDim2.new(0,200,0,50)
+    bb.AlwaysOnTop = true
+    bb.Adornee = plr.Character.Head
+
+    local txt = Instance.new("TextLabel", bb)
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.TextColor3 = Color3.fromRGB(0,255,0)
+    txt.TextStrokeTransparency = 0.3
+    txt.Font = Enum.Font.GothamBold
+    txt.TextScaled = true
+
+    bb.Parent = CoreGui
+    ESP[plr] = {Gui = bb, Label = txt}
+end
+
+RunService.RenderStepped:Connect(function()
+    if not state.ESP_Player then
+        ClearESP()
+        return
+    end
+
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LP and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            CreateESP(plr)
+            local data = ESP[plr]
+            if data then
+                local dist = (Root.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                data.Label.Text = plr.Name .. "\n" .. math.floor(dist) .. "m"
+            end
+        end
+    end
+end)
+
+--------------------------------------------------
+-- TABS
+--------------------------------------------------
+local Tabs = {}
+Tabs.Player = Window:Tab({Title="Player",Icon="user"})
+Tabs.ESP = Window:Tab({Title="ESP",Icon="eye"})
+
+--------------------------------------------------
+-- PLAYER TAB
+--------------------------------------------------
+Tabs.Player:Input({
+    Title="Walk Speed",
+    Default="16",
+    Callback=function(v) local n=tonumber(v) if n then state.Speed=n end end
+})
+
+Tabs.Player:Input({
+    Title="Fly Speed",
+    Default="60",
+    Callback=function(v) local n=tonumber(v) if n then state.FlySpeed=n end end
+})
+
+Tabs.Player:Toggle({
+    Title="Fly",
+    Default=false,
+    Callback=function(v) state.Fly=v if v then StartFly() else StopFly() end end
+})
+
+Tabs.Player:Toggle({
+    Title="Infinite Jump",
+    Default=false,
+    Callback=function(v) state.InfJump=v end
+})
+
+Tabs.Player:Button({
+    Title="Rejoin Server",
+    Callback=function() TeleportService:Teleport(game.PlaceId, LP) end
+})
+
+--------------------------------------------------
+-- ESP TAB
+--------------------------------------------------
+Tabs.ESP:Toggle({
+    Title="ESP Player (Name + Distance)",
+    Default=false,
+    Callback=function(v)
+        state.ESP_Player=v
+        if not v then ClearESP() end
+    end
+})
